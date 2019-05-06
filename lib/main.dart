@@ -1,20 +1,44 @@
 import 'package:flutter/material.dart';
-import 'routes/route.dart';
+import './view/home.dart';
+import './view/search.dart';
 
 void main() => runApp(MyApp());
 
-class MyApp extends StatelessWidget {
-  final routeManager = RouteManager();
+class MyApp extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() => MyAppState();
+}
+
+class MyAppState extends State<MyApp> {
+  int navIndex = 0;
+  List<Widget> _pages = [HomeView(), SearchView()]; 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      key: Key("main"),
       theme: ThemeData(
         primarySwatch: Colors.purple,
       ),
-      routes: routeManager.routes,
-      initialRoute: routeManager.initialRoute,
-      // home: Text("???"),
+      home: Scaffold(
+        body: _pages[navIndex],
+        bottomNavigationBar: BottomNavigationBar(
+          key: Key("bottom_navbar"),
+          currentIndex: navIndex,
+          items: [
+            BottomNavigationBarItem(
+                icon: Icon(Icons.home), title: Text("Home")),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.search), title: Text("Search")),
+          ],
+          fixedColor: Colors.green,
+          onTap: (index) {
+            setState(() {
+              navIndex = index;
+            });
+          },
+        ),
+      ),
     );
   }
 }

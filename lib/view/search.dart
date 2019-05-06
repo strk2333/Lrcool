@@ -22,22 +22,47 @@ class SearchViewState extends State<SearchView>
       body: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
-          Padding(
-            padding: EdgeInsets.only(top: 20),
+          Expanded(
+            child: buildSearchBar(),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              IconButton(
-                icon: Icon(
-                  Icons.arrow_back,
-                  size: 35,
+          Expanded(
+            flex: 5,
+            child: buildSearchRes(),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget buildSearchBar() {
+    return Row(
+      children: <Widget>[
+        Expanded(
+          flex: 3,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(10, 0, 5, 0),
+            child: TextField(
+              decoration: InputDecoration(
+                prefixIcon: Icon(
+                  Icons.search,
+                  size: 25,
                 ),
-                onPressed: () => Navigator.pop(context),
+                border: UnderlineInputBorder(
+                    borderSide:
+                        BorderSide(color: ColorIndex.data[MColor.primary])),
               ),
-              DropdownButton(
+              controller: tc,
+              onSubmitted: onSubmitSearch,
+              style: TextStyle(fontSize: 23),
+            ),
+          ),
+        ),
+        Expanded(
+            flex: 1,
+            child: Container(
+              padding: EdgeInsets.fromLTRB(0, 3, 10, 0),
+              child: DropdownButtonFormField(
                 value: source,
-                style: TextStyle(color: Colors.black),
                 items: [
                   DropdownMenuItem(
                     value: "netease",
@@ -62,64 +87,27 @@ class SearchViewState extends State<SearchView>
                     source = value;
                   });
                 },
-              )
-            ],
-          ),
-          buildSearchBar(),
-          Padding(
-            padding: EdgeInsets.only(top: 30),
-          ),
-          buildSearchRes(),
-        ],
-      ),
-    );
-  }
-
-  Widget buildSearchBar() {
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 30),
-            child: TextField(
-              decoration: InputDecoration(
-                prefixIcon: Icon(
-                  Icons.search,
-                  size: 25,
-                ),
-                // contentPadding: EdgeInsets.only(top: 1),
-                border: UnderlineInputBorder(
-                    borderSide:
-                        BorderSide(color: ColorIndex.data[MColor.primary])),
               ),
-              controller: tc,
-              onSubmitted: onSubmitSearch,
-              style: TextStyle(fontSize: 23),
-            ),
-          ),
-        )
+            ))
       ],
     );
   }
 
   Widget buildSearchRes() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-      child: Container(
-        height: Utils.getDeviceSize(context).height * 0.75,
-        child: ListView(
-          controller: sc,
-          itemExtent: 120,
-          padding: EdgeInsets.all(0),
-          children: buildSearchTiles(),
-        ),
+      padding: EdgeInsets.fromLTRB(20, 0, 20, 5),
+      child: ListView(
+        controller: sc,
+        itemExtent: 120,
+        padding: EdgeInsets.all(0),
+        children: buildSearchTiles(),
       ),
+      // ),
     );
   }
 
   List<Widget> buildSearchTiles() {
     var list = <Widget>[];
-
     for (var i = 0; i < result.length; i++) {
       list.add(
         Padding(

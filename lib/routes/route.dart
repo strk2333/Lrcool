@@ -6,12 +6,14 @@ import '../view/lrc.dart';
 
 class RouteManager {
   var routes = <String, WidgetBuilder> {
-    "/": (_) => HomeView(),
-    "/search": (_) => SearchView(),
     "/lrc": (_) => LrcView("", ""),
   };
 
   var initialRoute = "/";
+  var mainPages = [HomeView(), SearchView(), ];
+  var kitPages = <String, WidgetBuilder> {
+    "/lrc": (_) => LrcView("", ""),
+  };
 
   static RouteManager _instance;
 
