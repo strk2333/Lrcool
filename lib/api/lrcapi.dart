@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'dart:io';
 import 'package:sprintf/sprintf.dart';
+import 'package:path_provider/path_provider.dart';
 
 class LrcApi {
   // https://api.itooi.cn/music/netease/search?
@@ -11,9 +12,19 @@ class LrcApi {
       "/search?key=579621905&type=lrc&s=%s&limit=%d&offset=%d";
   static String _baseGetUrl =
       "https://api.itooi.cn/music/" + _source + "/lrc?key=579621905&id=%s";
+  static String _baseGetMusic = "https://api.itooi.cn/music/" +
+      _source +
+      "/url?key=579621905&id=%s&br=%s";
+
+  static final bps = <BPS, String>{
+    BPS.LOW: "128000",
+    BPS.MID: "192000",
+    BPS.HIGH: "320000",
+    BPS.ULTRA: "999000",
+  };
 
   static Future<List<Lrc>> searchLrc(String keyWord) async {
-    var url = sprintf(_baseUrl, [keyWord, 11, 0]);
+    var url = sprintf(_baseUrl, [keyWord, 20, 0]);
     var list = <Lrc>[];
     return await Dio().get(url).then((resp) {
       if (resp.statusCode == HttpStatus.ok) {
@@ -75,6 +86,24 @@ class LrcApi {
     });
   }
 
+  static Future<String> getMusicUrl(String id, {BPS quality = BPS.LOW}) async {
+    var url = sprintf(_baseGetMusic, [id, bps[quality]]);
+
+    return await Dio().get(url, options: Options(responseType: ResponseType.bytes)).then((res) {
+      if (res.statusCode == HttpStatus.ok) {
+        // print(res.data.redirects[0].location);
+        if (res.redirects.length != 0) {
+          return res.redirects[0].location.toString();
+        }
+        return "No Redirect Found";
+      }
+      return "Bad Response";
+    }).catchError((e) {
+      print(e);
+      return "Fetch Error";
+    });
+  }
+
   static changeSource(String value) {
     _source = value;
     _baseUrl = "https://api.itooi.cn/music/" +
@@ -89,6 +118,14 @@ class Lrc {
   String id;
   String title;
   String summary;
+  String musicUrl;
 
-  Lrc(this.id, this.title, this.summary);
+  Lrc(this.id, this.title, this.summary, {this.musicUrl});
+}
+
+enum BPS {
+  LOW,
+  MID,
+  HIGH,
+  ULTRA,
 }

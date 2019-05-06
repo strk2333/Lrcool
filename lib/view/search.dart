@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../api/lrcapi.dart';
 import '../resources/color.dart';
 import './lrc.dart';
-import '../utils/utils.dart';
+import '../components/components.dart';
 
 class SearchView extends StatefulWidget {
   @override
@@ -31,6 +31,7 @@ class SearchViewState extends State<SearchView>
           )
         ],
       ),
+      resizeToAvoidBottomInset: false,
     );
   }
 
@@ -240,9 +241,22 @@ class LrcListTileState extends State<LrcListTile>
         String content = "";
         LrcApi.getLrc(lrcID).then((res) {
           content = res.toString();
-          Navigator.push(context, MaterialPageRoute(builder: (_) {
-            return LrcView(title, content);
-          }));
+        }).then((res) {
+          LrcApi.getMusicUrl(lrcID).then((res) {
+            if (!res.startsWith("http")) {
+              setState(() {
+                showDialog(
+                    context: context,
+                    builder: (context) => CustomAlertDialog("Error", res));
+              });
+              return res;
+            }
+
+            Navigator.push(context, MaterialPageRoute(builder: (_) {
+              return LrcView(title, content, musicUrl: res);
+            }));
+          });
+          return res;
         });
       },
     );

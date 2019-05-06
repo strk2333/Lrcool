@@ -12,7 +12,7 @@ class MyApp extends StatefulWidget {
 class MyAppState extends State<MyApp> {
   int navIndex = 0;
   List<Widget> _pages = [HomeView(), SearchView()]; 
-  // This widget is the root of your application.
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -38,6 +38,7 @@ class MyAppState extends State<MyApp> {
             });
           },
         ),
+        resizeToAvoidBottomInset: false,
       ),
     );
   }
