@@ -10,7 +10,7 @@ class MyApp extends StatefulWidget {
 }
 
 class MyAppState extends State<MyApp> {
-  int navIndex = 0;
+  int navIndex = 1; // first page
   List<Widget> _pages = [HomeView(), SearchView()]; 
 
   @override

@@ -16,6 +16,14 @@ class SearchViewState extends State<SearchView>
   var sc = ScrollController();
   String source = "netease";
 
+  SearchViewState() {
+    LrcApi.searchLrc("e").then((list) {
+      setState(() {
+        result = list;
+      });
+    });;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -237,29 +245,31 @@ class LrcListTileState extends State<LrcListTile>
           ac.forward();
         });
       },
-      onTap: () {
-        String content = "";
-        LrcApi.getLrc(lrcID).then((res) {
-          content = res.toString();
-        }).then((res) {
-          LrcApi.getMusicUrl(lrcID).then((res) {
-            if (!res.startsWith("http")) {
-              setState(() {
-                showDialog(
-                    context: context,
-                    builder: (context) => CustomAlertDialog("Error", res));
-              });
-              return res;
-            }
+      onTap: fetchLrc,
+    );
+  }
 
-            Navigator.push(context, MaterialPageRoute(builder: (_) {
-              return LrcView(title, content, musicUrl: res);
-            }));
+  fetchLrc() {
+    List<LrcClip> content;
+    LrcApi.getLrc(lrcID).then((res) {
+      content = res;
+    }).then((res) {
+      LrcApi.getMusicUrl(lrcID).then((res) {
+        if (!res.startsWith("http")) {
+          setState(() {
+            showDialog(
+                context: context,
+                builder: (context) => CustomAlertDialog("Error", res));
           });
           return res;
-        });
-      },
-    );
+        }
+
+        Navigator.push(context, MaterialPageRoute(builder: (_) {
+          return LrcView(title, content, musicUrl: res);
+        }));
+      });
+      return res;
+    });
   }
 
   @override

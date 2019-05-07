@@ -32,6 +32,10 @@ class MusicPlayer {
     }
   }
 
+  getPlayTime() {
+    player.onAudioPositionChanged;
+  }
+
   dispose() {
     player.release();
   }

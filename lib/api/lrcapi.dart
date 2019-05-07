@@ -17,6 +17,7 @@ class LrcApi {
       "/url?key=579621905&id=%s&br=%s";
 
   static final bps = <BPS, String>{
+    BPS.AUTO: "000000",
     BPS.LOW: "128000",
     BPS.MID: "192000",
     BPS.HIGH: "320000",
@@ -39,7 +40,7 @@ class LrcApi {
             break;
           case "kugou":
             _packLrcData(
-                resp.data["data"], list, ["320hash", "filename", "lyric"]);
+                resp.data["data"], list, ["hash", "filename", "lyric"]);
             break;
           case "kuwo": // dismiss
             break;
@@ -63,35 +64,90 @@ class LrcApi {
               .toString()
               .replaceAll(", ", "\n")
               .replaceAll(",", "")
-              .replaceFirst('[', "")
+              // .replaceFirst('[', "")
               .replaceAll(RegExp(r"(<em>|</em>|<b>|</b>)"), "")
               .replaceAll(RegExp(r"^\[.*?\]", multiLine: true), "")));
     }
   }
 
-  static Future<String> getLrc(String id) async {
+  static Future<List<LrcClip>> getLrc(String id) async {
     var url = sprintf(_baseGetUrl, [id]);
+    var list = <LrcClip>[];
     return await Dio()
         .get(url, options: Options(responseType: ResponseType.plain))
         .then((res) {
       if (res.statusCode == HttpStatus.ok) {
-        return res.data
-            .toString()
-            .replaceAll(RegExp(r"^\[.*?\]", multiLine: true), "");
+        print(url);
+        var reg = RegExp(r"\[[\d|:|\.]*?\]");
+
+        for (var clip in reg.allMatches(res.data.toString())) {
+          var rawTime = clip.group(0).substring(1, clip.group(0).length - 1);
+
+          int milliTime = 0;
+          var spliceList = rawTime.split(".");
+          if (spliceList.length != 2) return list;
+          milliTime += int.parse(spliceList[1]);
+          var spliceList2 = spliceList[0].split(":");
+          int radix = 0;
+          for (int i = spliceList2.length - 1; i >= 0; i--) {
+            int radixMulti = radix == 0 ? 1 : radix * 60;
+            milliTime += int.parse(spliceList2[i]) * 1000 * radixMulti;
+            radix++;
+          }
+
+          list.add(LrcClip(time: milliTime));
+        }
+
+        List splitList = res.data.toString().split(reg);
+        if (splitList.length > 1) {
+          splitList.removeAt(0);
+          for (var i = 0; i < splitList.length; i++) {
+            list[i].text = splitList[i];
+          }
+        } else {}
+        // res.data
+        //     .toString()
+        //     .replaceAll(RegExp(r"^\[.*?\]", multiLine: true), "");
       }
-      return "Bad Response";
+      return list;
     }).catchError((e) {
       print(e);
-      return "Fetch Error";
+      return list;
     });
   }
 
-  static Future<String> getMusicUrl(String id, {BPS quality = BPS.LOW}) async {
-    var url = sprintf(_baseGetMusic, [id, bps[quality]]);
+  static Future<String> getMusicUrl(String id,
+      {BPS quality = BPS.AUTO, int times = 0}) async {
+        String url;
+    if (quality == BPS.AUTO) {
+      BPS autoQuality;
+      switch (times) {
+        case 0:
+          autoQuality = BPS.LOW;
+          break;
+        case 1:
+          autoQuality = BPS.MID;
+          break;
+        case 2:
+          autoQuality = BPS.HIGH;
+          break;
+        case 3:
+          autoQuality = BPS.ULTRA;
+          break;
+        default:
+          autoQuality = BPS.LOW;
+      }
+      print(autoQuality);
+      url = sprintf(_baseGetMusic, [id, bps[autoQuality]]);
+    } else {
+      url = sprintf(_baseGetMusic, [id, bps[quality]]);
+    }
 
-    return await Dio().get(url, options: Options(responseType: ResponseType.bytes)).then((res) {
+    return await Dio()
+        .get(url, options: Options(responseType: ResponseType.bytes))
+        .then((res) {
       if (res.statusCode == HttpStatus.ok) {
-        // print(res.data.redirects[0].location);
+        print(res.redirects[0].location);
         if (res.redirects.length != 0) {
           return res.redirects[0].location.toString();
         }
@@ -100,7 +156,11 @@ class LrcApi {
       return "Bad Response";
     }).catchError((e) {
       print(e);
-      return "Fetch Error";
+
+      if (quality != BPS.AUTO || times == 3)
+        return "Fetch Error";
+      else
+        return getMusicUrl(id, quality: BPS.AUTO, times: times + 1);
     });
   }
 
@@ -123,7 +183,20 @@ class Lrc {
   Lrc(this.id, this.title, this.summary, {this.musicUrl});
 }
 
+class LrcClip {
+  int time;
+  String text;
+
+  LrcClip({this.time = 0, this.text = ""});
+
+  @override
+  String toString() {
+    return time.toString() + text;
+  }
+}
+
 enum BPS {
+  AUTO,
   LOW,
   MID,
   HIGH,
